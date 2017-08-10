@@ -1,4 +1,3 @@
-// English retail version.
 state("game", "1.0")
 {
 	byte isLoading1 : 0x272584; 
@@ -31,7 +30,7 @@ init
 
 update
 {
-	if (version == "") { return; }		// If version is unknown, don't do anything (without it, it'd default to "1.0en" version)
+	if (version == "") { return; }		// If version is unknown, don't do anything (without it, it'd default to "1.0" version)
 }
 
 // Start timer after skipping the first cutscene (you can comment this section out if you don't want this feature)
