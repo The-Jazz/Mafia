@@ -10,6 +10,7 @@ state("game", "1.0")
 	bool inMission : 0x255360, 0x460, 0xB4, 0xDC;
 	byte subSegment : 0x27202C;
 	byte finalCutscene : 0x256444;
+	string2 language : 0x261C6C;		// returns cz, de, sp, it, ru, en
 	string6 mission : 0x2F94A8, 0x0;
 	string16 missionAlt : 0x2F94A8, 0x0;	// used for "submissions"
 }
@@ -23,6 +24,7 @@ state("game", "1.2")
 	bool inMission : 0x23D2BC, 0x460, 0xB4, 0xDC;
 	byte subSegment : 0x2D46A4;
 	byte finalCutscene : 0x2BDD7C;
+	string2 language : 0x2C42C4;
 	string6 mission : 0x247E60, 0x0;
 	string16 missionAlt : 0x247E60, 0x0;
 }
@@ -35,20 +37,29 @@ init
 	else if (modules.First().ModuleMemorySize == 2993526) {
 		version = "1.2";
 	}
+	vars.crash = false;
+	vars.lastMission = "";
+	vars.fromExtrem = false;
+	vars.setFinalCutscene = false; // needed because language variable is not directly set with the game starting
 }
 
 startup
 {
 	settings.Add("fairplay", false, "Split after night segment in Fairplay");
 	settings.Add("sarah", true, "Split after Sarah");
-	settings.Add("whore", true, "Split after Whore");
-	vars.crash = false;
-	vars.lastMission = "";
-	vars.fromExtrem = false;
+	settings.Add("whore", true, "Split after Whore");	
 }
 
 update
 {
+	if (!vars.setFinalCutscene && current.language != "") {
+		if (current.language == "cz") vars.finalCutscene = 2;
+		else if (current.language == "de") vars.finalCutscene = 3;
+		else if (current.language == "sp") vars.finalCutscene = 1;
+		else vars.finalCutscene = 0; 
+		vars.setFinalCutscene = true;
+	}
+	
 	if (version == "") return;		// If version is unknown, don't do anything (without it, it'd default to "1.0" version)
 
 	if (current.mission != null) {
@@ -72,14 +83,14 @@ reset
 	return (current.mission == "mise01" && ((old.isLoading1 && !current.isLoading1) || (!old.isLoading3 && current.isLoading3)));
 }
 
-// Split for every mission change (at the very beginning of every loading) [you can comment this section out if you don't want this feature]
+// Split for every mission change (at the very beginning of every loading)
 split
 {
 	if (current.mission == null) return;  // gets rid of null reference expections in debugview
 	if (current.mission.Contains("mise") && old.mission != "00menu") {
 		// Final split
 		if (current.missionAlt == "mise20-galery") {
-			return (current.subSegment == 49 && old.finalCutscene == 0 && current.finalCutscene > 0);
+			return (current.subSegment == 49 && old.finalCutscene <= vars.finalCutscene && current.finalCutscene > vars.finalCutscene);
 		}
 
 		// Don't split on these mission changes
@@ -141,4 +152,3 @@ exit
 	}
 	vars.crash = true;	
 }
-
