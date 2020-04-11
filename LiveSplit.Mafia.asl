@@ -37,9 +37,7 @@ init
 	else if (modules.First().ModuleMemorySize == 2993526) {
 		version = "1.2";
 	}
-	vars.crash = false;
-	vars.lastMission = "";
-	vars.fromExtrem = false;
+
 	vars.setFinalCutscene = false; // needed because language variable is not directly set with the game starting
 }
 
@@ -48,6 +46,10 @@ startup
 	settings.Add("fairplay", false, "Split after night segment in Fairplay");
 	settings.Add("sarah", true, "Split after Sarah");
 	settings.Add("whore", true, "Split after Whore");	
+	
+	vars.crash = false;
+	vars.lastMission = "";
+	vars.fromExtrem = false;
 }
 
 update
