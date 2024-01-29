@@ -10,6 +10,7 @@ state("game", "1.0")
 	bool inMission : 0x255360, 0x460, 0xB4, 0xDC;
 	byte subSegment : 0x27202C;
 	byte finalCutscene : 0x256444;
+	byte profile : 0x271FD8;                // ID of the currently selected profile (0 - 12)
 	string2 language : 0x261C6C;		// returns cz, de, sp, it, ru, en
 	string6 mission : 0x2F94A8, 0x0;
 	string16 missionAlt : 0x2F94A8, 0x0;	// used for "submissions"
@@ -24,6 +25,7 @@ state("game", "1.2")
 	bool inMission : 0x23D2BC, 0x460, 0xB4, 0xDC;
 	byte subSegment : 0x2D46A4;
 	byte finalCutscene : 0x2BDD7C;
+	byte profile : 0x2D4650;
 	string2 language : 0x2C42C4;
 	string6 mission : 0x247E60, 0x0;
 	string16 missionAlt : 0x247E60, 0x0;
@@ -39,13 +41,19 @@ init
 	}
 
 	vars.setFinalCutscene = false; // needed because language variable is not directly set with the game starting
+	vars.savesToKeep = new string[] { ".000", ".sav" };
+	vars.savePath = Path.Combine(Path.GetDirectoryName(game.MainModule.FileName), "savegame");
 }
 
 startup
 {
 	settings.Add("fairplay", false, "Split after night segment in Fairplay");
 	settings.Add("sarah", true, "Split after Sarah");
-	settings.Add("whore", true, "Split after Whore");	
+	settings.Add("whore", true, "Split after Whore");
+	settings.Add("removeSave", false, "Remove save files");
+	settings.Add("removeSaveReset", false, "when you reset the run", "removeSave");
+	settings.Add("removeSaveStart", false, "when you start the run", "removeSave");
+	settings.SetToolTip("removeSave", "All save files of the profile you started the run in will be deleted - only .000 and .sav are kept.");	
 	
 	vars.crash = false;
 	vars.lastMission = "";
@@ -143,6 +151,42 @@ isLoading
 		else {
 			vars.fromExtrem = false;
 			return (current.isLoading1 || !current.isLoaded || current.isLoading3);
+		}
+	}
+}
+
+onReset
+{
+	if (settings["removeSaveReset"])
+	{
+		IEnumerable<dynamic> saveFiles = Directory.EnumerateFiles(vars.savePath, vars.saveName);
+		
+		foreach (var file in saveFiles.Where(save => !((string[])vars.savesToKeep).Any(ext => ext == Path.GetExtension(save))))
+		{
+			if (File.Exists(file))
+			{
+				File.Delete(file);
+			}
+		}
+	}
+}
+
+onStart
+{
+	if (settings["removeSave"]) {
+		vars.saveName = "mafia" + current.profile.ToString("D3") + ".*";
+	}
+
+	if (settings["removeSaveStart"])
+	{
+		IEnumerable<dynamic> saveFiles = Directory.EnumerateFiles(vars.savePath, vars.saveName);
+		
+		foreach (var file in saveFiles.Where(save => !((string[])vars.savesToKeep).Any(ext => ext == Path.GetExtension(save))))
+		{
+			if (File.Exists(file))
+			{
+				File.Delete(file);
+			}
 		}
 	}
 }
